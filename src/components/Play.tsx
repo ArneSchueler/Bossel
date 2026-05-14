@@ -88,24 +88,20 @@ export default function Play({ state, updateState }: Props) {
   const finishRound = () => {
     if (!isRoundComplete) return;
     
-    // Find team with lowest score
-    let lowestScore = Infinity;
-    let winnerId = '';
-    
-    teamScores.forEach(t => {
-      if (t.total < lowestScore) {
-        lowestScore = t.total;
-        winnerId = t.id;
-      }
-    });
+    // Find team(s) with lowest score
+    const minScore = Math.min(...teamScores.map(t => t.total));
+    const winnerIds = teamScores.filter(t => t.total === minScore).map(t => t.id);
 
-    updateState(prev => ({
-      roundWins: {
-        ...prev.roundWins,
-        [winnerId]: (prev.roundWins[winnerId] || 0) + 1
-      },
-      phase: 'summary'
-    }));
+    updateState(prev => {
+      const newRoundWins = { ...prev.roundWins };
+      winnerIds.forEach(id => {
+        newRoundWins[id] = (newRoundWins[id] || 0) + 1;
+      });
+      return {
+        roundWins: newRoundWins,
+        phase: 'summary'
+      };
+    });
   };
 
   return (

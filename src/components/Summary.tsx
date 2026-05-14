@@ -48,21 +48,26 @@ export default function Summary({ state, updateState }: Props) {
   };
 
   const hasThrows = state.throws.length > 0;
-  const roundWinner = hasThrows ? currentScores[0] : null;
+  const minScore = currentScores.length > 0 ? currentScores[0].total : 0;
+  const roundWinners = hasThrows ? currentScores.filter(t => t.total === minScore) : [];
 
   return (
     <div className="space-y-6 pb-6">
       {/* Victory Card */}
-      {roundWinner && (
+      {roundWinners.length > 0 && (
         <section className="bg-gradient-to-br from-brand-dark to-emerald-900 p-6 rounded-2xl shadow-lg relative overflow-hidden text-center">
           <div className="absolute -top-10 -right-10 text-brand-mint/10">
             <Trophy size={160} />
           </div>
           <div className="relative z-10">
-            <p className="text-emerald-400 text-sm font-bold uppercase tracking-wider mb-2">Round Winner</p>
-            <h2 className="text-3xl font-extrabold text-white mb-2">{roundWinner.name}</h2>
+            <p className="text-emerald-400 text-sm font-bold uppercase tracking-wider mb-2">
+              {roundWinners.length > 1 ? 'Round Winners (Tie)' : 'Round Winner'}
+            </p>
+            <h2 className="text-3xl font-extrabold text-white mb-2">
+              {roundWinners.map(w => w.name).join(' & ')}
+            </h2>
             <div className="inline-block bg-white/20 px-4 py-2 rounded-full backdrop-blur-sm">
-              <span className="text-brand-mint font-bold">{roundWinner.total} Points</span>
+              <span className="text-brand-mint font-bold">{minScore} Points</span>
             </div>
           </div>
         </section>
