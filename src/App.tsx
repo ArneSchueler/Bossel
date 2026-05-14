@@ -3,6 +3,7 @@ import { useGameState } from './hooks/useGameState';
 import Setup from './components/Setup';
 import Play from './components/Play';
 import Summary from './components/Summary';
+import bgImage from './assets/background.png';
 
 function App() {
   const { state, updateState } = useGameState();
@@ -14,7 +15,10 @@ function App() {
   ] as const;
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 max-w-md mx-auto bg-brand-slate shadow-2xl relative">
+    <div 
+      className="flex flex-col min-h-screen pb-20 max-w-md mx-auto shadow-2xl relative bg-[size:auto_100%] bg-top bg-no-repeat bg-fixed"
+      style={{ backgroundImage: `url(${bgImage})`, backgroundColor: '#062115' }}
+    >
       {/* Main Content Area */}
       <main className="flex-1 p-4 overflow-y-auto">
         {state.phase === 'setup' && <Setup state={state} updateState={updateState} />}
