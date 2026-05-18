@@ -39,8 +39,6 @@ export default function Play({ state, updateState }: Props) {
     return { ...team, total, count };
   });
 
-  const isRoundComplete = state.throws.length > 0 && new Set(teamScores.map(t => t.count)).size === 1;
-
   const handleScoreSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const points = parseInt(pointsInput, 10);
@@ -100,7 +98,7 @@ export default function Play({ state, updateState }: Props) {
   };
 
   const finishRound = () => {
-    if (!isRoundComplete) return;
+    if (state.throws.length === 0) return;
     
     // Find team(s) with lowest score
     const minScore = Math.min(...teamScores.map(t => t.total));
@@ -245,9 +243,9 @@ export default function Play({ state, updateState }: Props) {
       {/* Finish Round Button */}
       <button
         onClick={finishRound}
-        disabled={!isRoundComplete}
+        disabled={state.throws.length === 0}
         className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-          isRoundComplete
+          state.throws.length > 0
             ? 'bg-brand-dark text-white shadow-lg shadow-emerald-900/20 hover:bg-emerald-900'
             : 'bg-slate-200 text-slate-400 cursor-not-allowed'
         }`}
