@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Plus, Minus, X, Shuffle, Edit2, Play } from 'lucide-react';
 import type { GameState, Player, Team } from '../types';
 
+const ADJECTIVES = ['Hungry', 'Flying', 'Horny', 'Sweaty', 'Drunk', 'Salty', 'Greasy', 'Shaved', 'Moist', 'Slippery', 'Thirsty', 'Rowdy', 'Naughty', 'Chubby', 'Kinky', 'Filthy', 'Clumsy', 'Gassy', 'Sticky', 'Itchy', 'Screaming', 'Throbbing', 'Naked', 'Smelly', 'Juicy', 'Gigantic', 'Tiny', 'Hard', 'Soft', 'Fluffy', 'Grumpy', 'Horrible', 'Lusty', 'Brazen', 'Tipsy', 'Wasted', 'Brapless', 'Panting', 'Giggly', 'Drunken', 'Fierce', 'Sloppy', 'Dirty', 'Shiny', 'Spiky', 'Wobbling', 'Rigid', 'Limp', 'Fierce', 'Wild', 'Raw', 'Cooked', 'Burnt', 'Spicy', 'Creamy', 'Rubbery', 'Wet', 'Dry', 'Loaded', 'Wired', 'Psycho', 'Creepy', 'Nerdy', 'Funky', 'Groovy', 'Jazzy', 'Bossy', 'Trashy', 'Classy', 'Sassy', 'Trashy', 'Fancy', 'Petty', 'Messy', 'Jazzy', 'Loopy', 'Dizzy', 'Trippy', 'Psycho', 'Savage', 'Brutal', 'Wicked', 'Divine', 'Toxic', 'Bitter', 'Sweet', 'Sour', 'Salty', 'Crispy', 'Crunchy', 'Saggy', 'Perky', 'Firm', 'Loose', 'Tight', 'Deep', 'Shallow', 'Fat', 'Skinny', 'Chunky'];
+
+const NOUNS = ['Banana', 'Cat', 'Car', 'Potato', 'Bossler', 'Cucumber', 'Sausage', 'Meatball', 'Unicorn', 'Eggplant', 'Pickle', 'Muffin', 'Cupcake', 'Beaver', 'Rooster', 'Donkey', 'Monkey', 'Sausage', 'Taco', 'Burrito', 'Peach', 'Melon', 'Cherry', 'Nut', 'Sack', 'Ball', 'Stick', 'Tool', 'Hammer', 'Knob', 'Joystick', 'Rocket', 'Submarine', 'Bush', 'Carpet', 'Curtain', 'Snake', 'Worm', 'Eel', 'Sausage', 'Wiener', 'Frank', 'Bratwurst', 'Salami', 'Noodle', 'Meatloaf', 'Biscuit', 'Cracker', 'Cookie', 'Pancake', 'Waffle', 'Donut', 'Bagel', 'Pickle', 'Olive', 'Mushroom', 'Pepper', 'Chili', 'Onion', 'Garlic', 'Potato', 'Tomato', 'Pumpkin', 'Squash', 'Carrot', 'Broccoli', 'Cabbage', 'Lettuce', 'Spinach', 'Kale', 'Spatula', 'Whisk', 'Bucket', 'Mop', 'Sponge', 'Brush', 'Soap', 'Towel', 'Pillow', 'Blanket', 'Goblin', 'Troll', 'Dwarf', 'Giant', 'Fairy', 'Witch', 'Wizard', 'Dragon', 'Pirate', 'Ninja', 'Cowboy', 'Robot', 'Alien', 'Zombie', 'Ghost', 'Clown', 'Panda', 'Koala', 'Sloth', 'Hippo'];
+
 interface Props {
   state: GameState;
   updateState: (updates: Partial<GameState> | ((prev: GameState) => Partial<GameState>)) => void;
@@ -27,19 +31,46 @@ export default function Setup({ state, updateState }: Props) {
     }));
   };
 
+  const generateUniqueName = (usedNames: Set<string> = new Set()) => {
+    let name: string;
+    do {
+      const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+      const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+      name = `${adj} ${noun}`;
+    } while (usedNames.has(name) || state.teams.some(t => t.name === name));
+    return name;
+  };
+
   const randomizeTeams = () => {
     const shuffled = [...state.players].sort(() => Math.random() - 0.5);
-    const newTeams: Team[] = Array.from({ length: state.teamCount }).map((_, i) => ({
-      id: crypto.randomUUID(),
-      name: `Team ${String.fromCharCode(65 + i)}`,
-      playerIds: []
-    }));
+    const usedNames = new Set<string>();
+
+    const newTeams: Team[] = Array.from({ length: state.teamCount }).map(() => {
+      const name = generateUniqueName(usedNames);
+      usedNames.add(name);
+      return {
+        id: crypto.randomUUID(),
+        name: name,
+        playerIds: []
+      };
+    });
 
     shuffled.forEach((player, i) => {
       newTeams[i % state.teamCount].playerIds.push(player.id);
     });
 
     updateState({ teams: newTeams, currentTurn: null });
+  };
+
+  const randomizeTeamName = (teamId: string) => {
+    const newName = generateUniqueName();
+    if (editingTeam === teamId) {
+       setTeamNameInput(newName);
+    } else {
+       updateState(prev => ({
+         teams: prev.teams.map(t => t.id === teamId ? { ...t, name: newName } : t)
+       }));
+    }
   };
 
   const saveTeamName = (teamId: string) => {
@@ -137,6 +168,9 @@ export default function Setup({ state, updateState }: Props) {
                         autoFocus
                         onKeyDown={(e) => e.key === 'Enter' && saveTeamName(team.id)}
                       />
+                      <button type="button" onClick={() => randomizeTeamName(team.id)} className="p-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded flex items-center justify-center transition-colors" title="Randomize Name">
+                        <Shuffle size={14} />
+                      </button>
                       <button onClick={() => saveTeamName(team.id)} className="bg-brand-accent text-white px-2 py-1 rounded text-xs font-bold">Save</button>
                     </div>
                   ) : (
@@ -150,7 +184,7 @@ export default function Setup({ state, updateState }: Props) {
                       </button>
                     </div>
                   )}
-                  <span className="text-xs font-medium bg-white px-2 py-1 rounded-md text-slate-500 shadow-sm">{team.playerIds.length} players</span>
+                  <span className="text-xs font-medium bg-white px-2 py-1 rounded-md text-slate-500 shadow-sm">{team.playerIds.length}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {team.playerIds.map(pid => {
