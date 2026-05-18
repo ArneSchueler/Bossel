@@ -75,6 +75,20 @@ export default function Play({ state, updateState }: Props) {
     setPointsInput('');
   };
 
+  const setTurnToTeam = (teamId: string) => {
+    updateState(prev => {
+      const selectedTeam = prev.teams.find(t => t.id === teamId);
+      if (!selectedTeam) return {};
+      
+      const teamThrows = prev.throws.filter(t => t.teamId === teamId).length;
+      const nextPlayerId = selectedTeam.playerIds[teamThrows % selectedTeam.playerIds.length];
+      
+      return {
+        currentTurn: { teamId, playerId: nextPlayerId }
+      };
+    });
+  };
+
   const handleEditSave = (throwId: string) => {
     const points = parseInt(editPointsValue, 10);
     if (!isNaN(points)) {
@@ -112,7 +126,7 @@ export default function Play({ state, updateState }: Props) {
         <h2 className="text-sm text-emerald-400 font-bold mb-4 uppercase tracking-wider">Live Match</h2>
         <div className="grid grid-cols-2 gap-4 relative z-10">
           {teamScores.map(team => (
-            <div key={team.id} className={`p-3 rounded-xl border ${currentTeam?.id === team.id ? 'border-brand-mint bg-white/10' : 'border-white/10 bg-black/20'}`}>
+            <div key={team.id} className={`p-3 rounded-xl border ${currentTeam?.id === team.id ? 'border-brand-accent bg-white/10' : 'border-white/10 bg-black/20'}`}>
               <div className="text-xs text-slate-300 mb-1 truncate">{team.name}</div>
               <div className="text-2xl font-bold text-white">{team.total}</div>
               <div className="text-[10px] text-emerald-500 mt-1">{team.count} throws</div>
@@ -146,6 +160,36 @@ export default function Play({ state, updateState }: Props) {
             Enter Points <ArrowRight size={20} />
           </button>
         </form>
+
+        <div className="mt-8 border-t border-slate-100 pt-6">
+          <p className="text-sm text-slate-500 font-medium mb-4">Wer liegt aktuell hinten?</p>
+          <div className="grid grid-cols-2 gap-4">
+            {state.teams.map(team => {
+              const isActive = currentTeam?.id === team.id;
+              const teamThrows = state.throws.filter(t => t.teamId === team.id).length;
+              const nextPlayerId = team.playerIds[teamThrows % team.playerIds.length];
+              const nextPlayer = state.players.find(p => p.id === nextPlayerId);
+
+              return (
+                <button
+                  key={team.id}
+                  type="button"
+                  onClick={() => setTurnToTeam(team.id)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    isActive 
+                      ? 'border-brand-accent bg-brand-mint/10' 
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100'
+                  }`}
+                >
+                  <div className="text-xs text-slate-500 mb-1 truncate">{team.name}</div>
+                  <div className={`text-lg font-bold truncate ${isActive ? 'text-brand-dark' : 'text-slate-700'}`}>
+                    {nextPlayer?.name}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
       {/* History Log */}
